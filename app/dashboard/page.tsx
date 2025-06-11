@@ -67,8 +67,8 @@ export default async function ProtectedPage() {
   }
 
   return (
-    <div className="w-full flex flex-col gap-12 items-center">
-     
+    <div className="w-full flex flex-col gap-8">
+      
       <RestrictionsManager
         initialUid={user.id}
         allUsers={userList?.users ?? []}
