@@ -1,31 +1,41 @@
 "use client";
 
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
-import { DailySummaryData } from "@/lib/types";
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
-export function Overview({ data }: { data: DailySummaryData[] }) {
+interface DomainChartProps {
+  data: { url: string; [key: string]: any }[];
+  dataKey: string;
+  name: string;
+}
+
+export function DomainBarChart({ data, dataKey, name }: DomainChartProps) {
+  const formattedData = data.map(item => {
+    try {
+      const url = new URL(item.url);
+      return {
+        ...item,
+        name: url.hostname.replace(/^www\./, ''),
+      }
+    } catch (error) {
+      return {
+        ...item,
+        name: item.url,
+      }
+    }
+  });
+
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <AreaChart data={data}>
-        <defs>
-          <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="currentColor" stopOpacity={0.8}/>
-            <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
-          </linearGradient>
-        </defs>
-        <XAxis
-          dataKey="date"
-          stroke="#888888"
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-        />
+      <BarChart data={formattedData} layout="vertical">
+        <XAxis type="number" hide />
         <YAxis
+          dataKey="name"
+          type="category"
           stroke="#888888"
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `${value}`}
+          width={120}
         />
         <Tooltip
           cursor={{ fill: "transparent" }}
@@ -36,10 +46,10 @@ export function Overview({ data }: { data: DailySummaryData[] }) {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex flex-col">
                       <span className="text-[0.70rem] uppercase text-muted-foreground">
-                        Date
+                        {name}
                       </span>
                       <span className="font-bold text-muted-foreground">
-                        {payload[0].payload.date}
+                        {payload[0].payload.name}
                       </span>
                     </div>
                     <div className="flex flex-col">
@@ -54,18 +64,17 @@ export function Overview({ data }: { data: DailySummaryData[] }) {
                 </div>
               );
             }
+
             return null;
           }}
         />
-        <Area
-          type="monotone"
-          dataKey="summary"
-          stroke="currentColor"
-          fillOpacity={1} 
-          fill="url(#colorUv)"
+        <Bar
+          dataKey={dataKey}
+          fill="currentColor"
+          radius={[4, 4, 0, 0]}
           className="fill-primary"
         />
-      </AreaChart>
+      </BarChart>
     </ResponsiveContainer>
   );
 } 

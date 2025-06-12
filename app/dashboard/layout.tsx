@@ -2,6 +2,7 @@ import { ClientProviders } from "@/components/client-providers";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
+import { AuthButton } from "@/components/auth-button";
 
 export default function ProtectedLayout({
   children,
@@ -19,7 +20,7 @@ export default function ProtectedLayout({
               <Link href={"/dashboard/analytics"}>Analytics</Link>
               <ThemeSwitcher />
             </div>
-            
+            <AuthButton />
           </div>
         </nav>
         <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
