@@ -3,7 +3,8 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 interface DomainChartProps {
-  data: { url: string; [key: string]: string | number }[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: { url: string; [key: string]: any }[];
   dataKey: string;
   name: string;
 }
