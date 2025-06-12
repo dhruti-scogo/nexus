@@ -3,7 +3,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
-import { DomainData } from "@/lib/types";
+import { DomainData, DomainVisitData } from "@/lib/types";
 
 function getFaviconUrl(domain: string) {
   // a url might be like https://www.google.com, so we need to extract the domain
@@ -15,10 +15,16 @@ function getFaviconUrl(domain: string) {
   }
 }
 
-export function RecentSales({ data }: { data: DomainData[] }) {
+export function RecentSales({
+  data,
+  keyName = "summaryTime",
+}: {
+  data: (DomainData | DomainVisitData)[];
+  keyName?: "summaryTime" | "counter";
+}) {
   return (
     <div className="space-y-8">
-      {data.map(item => (
+      {data.map((item) => (
         <div className="flex items-center" key={item.url}>
           <Avatar className="h-9 w-9">
             <AvatarImage src={getFaviconUrl(item.url)} alt="Avatar" />
@@ -27,9 +33,11 @@ export function RecentSales({ data }: { data: DomainData[] }) {
           <div className="ml-4 space-y-1">
             <p className="text-sm font-medium leading-none">{item.url}</p>
           </div>
-          <div className="ml-auto font-medium">{item.summaryTime}</div>
+          <div className="ml-auto font-medium">
+            {(item as any)[keyName]}
+          </div>
         </div>
       ))}
     </div>
-  )
+  );
 } 

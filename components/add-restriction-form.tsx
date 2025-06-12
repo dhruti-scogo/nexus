@@ -22,8 +22,8 @@ const formSchema = z.object({
   domain: z.string().min(2, {
     message: "Domain must be at least 2 characters.",
   }),
-  time: z.coerce.number().min(1, {
-    message: "Time must be at least 1 minute.",
+  time: z.coerce.number().min(0, {
+    message: "Time must be at least 0 seconds.",
   }),
 });
 
@@ -76,7 +76,7 @@ export function AddRestrictionForm({ uid }: { uid: string }) {
           name="time"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Time (minutes)</FormLabel>
+              <FormLabel>Time (seconds)</FormLabel>
               <FormControl>
                 <Input type="number" {...field} />
               </FormControl>
