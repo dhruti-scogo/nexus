@@ -26,12 +26,15 @@ import {
 } from "@/lib/types";
 import { UserSelector } from "@/components/user-selector";
 
-export default async function AnalyticsPage({
-  searchParams,
-}: {
-  searchParams: { uid: string };
-}) {
-  const uid = searchParams.uid ?? "user123";
+interface PageProps {
+  searchParams?: {
+    [key: string]: string | string[] | undefined;
+  };
+}
+
+export default async function AnalyticsPage({ searchParams }: PageProps) {
+  const uidParam = searchParams?.uid;
+  const uid = Array.isArray(uidParam) ? uidParam[0] : uidParam ?? "user123";
 
   let summary: SummaryData | undefined;
   let topDomains: DomainData[] | undefined;
