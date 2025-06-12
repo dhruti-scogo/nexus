@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AuthLayout({
   children,
@@ -32,7 +33,7 @@ export default function AuthLayout({
         </div>
       </div>
       <div className="hidden bg-muted lg:block">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop"
           alt="Image"
           width="1920"

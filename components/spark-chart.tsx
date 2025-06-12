@@ -3,7 +3,7 @@
 import { Area, AreaChart, ResponsiveContainer } from "recharts"
 
 interface SparkAreaChartProps {
-  data: any[];
+  data: Record<string, unknown>[];
   dataKey: string;
 }
 

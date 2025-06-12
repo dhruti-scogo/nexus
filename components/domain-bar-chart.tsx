@@ -3,7 +3,7 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 interface DomainChartProps {
-  data: { url: string; [key: string]: any }[];
+  data: { url: string; [key: string]: string | number }[];
   dataKey: string;
   name: string;
 }
