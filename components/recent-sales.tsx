@@ -22,6 +22,16 @@ export function RecentSales({
   data: (DomainData | DomainVisitData)[];
   keyName?: "summaryTime" | "counter";
 }) {
+  const renderValue = (item: DomainData | DomainVisitData) => {
+    if (keyName === "summaryTime" && "summaryTime" in item) {
+      return (item as DomainData).summaryTime;
+    }
+    if (keyName === "counter" && "counter" in item) {
+      return (item as DomainVisitData).counter;
+    }
+    return null;
+  };
+
   return (
     <div className="space-y-8">
       {data.map((item) => (
@@ -34,7 +44,7 @@ export function RecentSales({
             <p className="text-sm font-medium leading-none">{item.url}</p>
           </div>
           <div className="ml-auto font-medium">
-            {(item as any)[keyName]}
+            {renderValue(item)}
           </div>
         </div>
       ))}
