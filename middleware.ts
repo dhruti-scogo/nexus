@@ -1,7 +1,18 @@
 import { updateSession } from "@/lib/supabase/middleware";
-import { type NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl;
+
+  if (pathname === "/auth/sign-up") {
+    if (searchParams.get("allowed") !== "true") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return await updateSession(request);
 }
 

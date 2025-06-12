@@ -6,8 +6,6 @@ export default function LoginPage() {
     <AuthLayout
       title="Login"
       description="Enter your email below to login to your account"
-      linkHref="/auth/sign-up"
-      linkText="Don't have an account? Sign up"
     >
       <LoginForm />
     </AuthLayout>

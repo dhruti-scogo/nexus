@@ -10,8 +10,8 @@ export default function AuthLayout({
   children: React.ReactNode;
   title: string;
   description: string;
-  linkHref: string;
-  linkText: string;
+  linkHref?: string;
+  linkText?: string;
 }) {
   return (
     <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
@@ -22,11 +22,13 @@ export default function AuthLayout({
             <p className="text-balance text-muted-foreground">{description}</p>
           </div>
           {children}
-          <div className="mt-4 text-center text-sm">
-            <Link href={linkHref} className="underline">
-              {linkText}
-            </Link>
-          </div>
+          {linkHref && linkText && (
+            <div className="mt-4 text-center text-sm">
+              <Link href={linkHref} className="underline">
+                {linkText}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
       <div className="hidden bg-muted lg:block">
