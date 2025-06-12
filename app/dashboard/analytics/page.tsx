@@ -27,13 +27,14 @@ import {
 import { UserSelector } from "@/components/user-selector";
 
 interface PageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     [key: string]: string | string[] | undefined;
-  };
+  }>;
 }
 
 export default async function AnalyticsPage({ searchParams }: PageProps) {
-  const uidParam = searchParams?.uid;
+  const awaitedSearchParams = await searchParams;
+  const uidParam = awaitedSearchParams?.uid;
   const uid = Array.isArray(uidParam) ? uidParam[0] : uidParam ?? "user123";
 
   let summary: SummaryData | undefined;
