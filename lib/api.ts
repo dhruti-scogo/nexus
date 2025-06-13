@@ -14,13 +14,35 @@ import {
 
 const API_BASE_URL = "https://backend.prasadpatra.dev/api";
 
+// Define error response types
+interface ValidationError {
+  error: string;
+}
+
+interface ApiError extends Error {
+  status: number;
+  info?: ValidationError;
+}
+
 async function fetcher<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);
   if (!res.ok) {
-    const error = new Error("An error occurred while fetching the data.");
-    // Attach extra info to the error object.
-    // error.info = await res.json();
-    // error.status = res.status;
+    const error = new Error("An error occurred while fetching the data.") as ApiError;
+    error.status = res.status;
+    
+    // Try to parse error response for validation errors
+    try {
+      const errorData = await res.json();
+      error.info = errorData;
+      
+      // For 400 errors, use the specific error message from the API
+      if (res.status === 400 && errorData.error) {
+        error.message = errorData.error;
+      }
+    } catch {
+      // If we can't parse the error response, keep the generic message
+    }
+    
     throw error;
   }
   return res.json();

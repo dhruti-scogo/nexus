@@ -47,7 +47,14 @@ export function LoginForm() {
       toast.error(error.message);
     } else {
       toast.success("Logged in successfully!");
-      router.push("/dashboard");
+      
+      // Add a small delay to ensure the session is properly set
+      // before redirecting to dashboard
+      setTimeout(() => {
+        router.push("/dashboard");
+        // Force a page refresh to ensure middleware picks up the new session
+        router.refresh();
+      }, 100);
     }
   }
 
