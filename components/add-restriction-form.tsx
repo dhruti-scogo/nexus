@@ -22,19 +22,9 @@ import { useSWRConfig } from "swr";
 const formSchema = z.object({
   domain: z
     .string()
-    .min(2, {
-      message: "Domain must be at least 2 characters.",
-    })
-    .refine(
-      (value) => {
-        // Basic domain format validation
-        const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-        return domainRegex.test(value);
-      },
-      {
-        message: "Please enter a valid domain format (e.g., youtube.com, sub.example.org)",
-      }
-    ),
+    .min(1, {
+      message: "Domain must not be empty.",
+    }),
   time: z.coerce.number().min(0, {
     message: "Time must be at least 0 seconds.",
   }),
@@ -112,10 +102,10 @@ export function AddRestrictionForm({ uid }: { uid: string }) {
             <FormItem>
               <FormLabel>Domain</FormLabel>
               <FormControl>
-                <Input placeholder="youtube.com" {...field} />
+                <Input placeholder="youtube.com or https://www.youtube.com/watch?v=example" {...field} />
               </FormControl>
               <FormDescription>
-                The domain you want to restrict.
+                Enter a domain or full URL you want to restrict.
               </FormDescription>
               <FormMessage />
             </FormItem>
