@@ -12,6 +12,8 @@ import { AddRestrictionForm } from "./add-restriction-form";
 import { RestrictionsTable } from "./restrictions-table";
 import { ScrollArea } from "./ui/scroll-area";
 import { Button } from "./ui/button";
+import { DigitalClock } from "./digital-clock";
+
 
 export function RestrictionsManager({
   initialUid,
@@ -23,8 +25,18 @@ export function RestrictionsManager({
   const [displayUid, setDisplayUid] = useState(initialUid);
 
   return (
-    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3 w-full">
-      <Card className="col-span-1">
+    <div className="space-y-6">
+      {/* Header with Clock */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Restrictions Dashboard</h1>
+          <p className="text-muted-foreground">Manage domain restrictions and time limits</p>
+        </div>
+        <DigitalClock />
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3 w-full">
+        <Card className="col-span-1">
         <CardHeader>
           <CardTitle>Users</CardTitle>
           <CardDescription>
@@ -71,6 +83,7 @@ export function RestrictionsManager({
             <AddRestrictionForm uid={displayUid} />
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );
