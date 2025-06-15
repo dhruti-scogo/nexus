@@ -3,6 +3,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
 import { AuthButton } from "@/components/auth-button";
+import { AnalyticsDropdown } from "@/components/analytics-dropdown";
 
 export default function ProtectedLayout({
   children,
@@ -17,7 +18,7 @@ export default function ProtectedLayout({
             <div className="flex gap-5 items-center font-semibold">
               <Link href={"/"}>Nexus</Link>
               <Link href={"/dashboard"}>Dashboard</Link>
-              <Link href={"/dashboard/analytics"}>Analytics</Link>
+              <AnalyticsDropdown />
               <ThemeSwitcher />
             </div>
             <AuthButton />
