@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
   Form,
   FormControl,
@@ -80,7 +80,13 @@ export function UpdatePasswordForm() {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <LoadingButton 
+          type="submit" 
+          loading={form.formState.isSubmitting}
+          loadingText="Updating password..."
+        >
+          Submit
+        </LoadingButton>
       </form>
     </Form>
   );

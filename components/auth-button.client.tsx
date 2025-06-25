@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { Button } from "./ui/button";
+import { LoadingButton } from "./ui/loading-button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function AuthButtonClient({
   isLoggedIn,
@@ -12,14 +14,27 @@ export function AuthButtonClient({
 }) {
   const router = useRouter();
   const supabase = createClient();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.refresh();
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      router.refresh();
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return isLoggedIn ? (
-    <Button onClick={handleLogout} size="sm">Logout</Button>
+    <LoadingButton 
+      onClick={handleLogout} 
+      size="sm"
+      loading={isLoggingOut}
+      loadingText="Logging out..."
+    >
+      Logout
+    </LoadingButton>
   ) : (
     <div className="flex gap-2">
       <Button asChild size="sm" variant={"outline"}>

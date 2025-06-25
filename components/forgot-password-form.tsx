@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
   Form,
   FormControl,
@@ -57,7 +57,13 @@ export function ForgotPasswordForm() {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <LoadingButton 
+          type="submit" 
+          loading={form.formState.isSubmitting}
+          loadingText="Sending email..."
+        >
+          Submit
+        </LoadingButton>
       </form>
     </Form>
   );

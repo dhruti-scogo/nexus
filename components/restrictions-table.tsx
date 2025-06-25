@@ -9,22 +9,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { deleteRestriction, getUserRestrictions } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { TableSkeleton } from "@/components/ui/skeleton";
 import useSWR from "swr";
+import { useState } from "react";
 
 export function RestrictionsTable({ uid }: { uid: string }) {
-  const { data: restrictions, mutate } = useSWR(
+  const { data: restrictions, mutate, isLoading } = useSWR(
     ["restrictions", uid],
     () => getUserRestrictions(uid)
   );
+  const [deletingDomain, setDeletingDomain] = useState<string | null>(null);
 
   const handleDelete = async (domain: string) => {
-    await deleteRestriction(uid, domain);
-    mutate(); // Re-fetches the data
+    setDeletingDomain(domain);
+    try {
+      await deleteRestriction(uid, domain);
+      mutate(); // Re-fetches the data
+    } finally {
+      setDeletingDomain(null);
+    }
   };
 
-  if (!restrictions) {
-    return <div>Loading restrictions...</div>;
+  if (isLoading) {
+    return <TableSkeleton rows={3} />;
   }
 
   return (
@@ -45,12 +53,15 @@ export function RestrictionsTable({ uid }: { uid: string }) {
             <TableCell>{restriction.domain}</TableCell>
             <TableCell>{restriction.time}</TableCell>
             <TableCell className="text-right">
-              <Button
+              <LoadingButton
                 variant="destructive"
+                size="sm"
+                loading={deletingDomain === restriction.domain}
+                loadingText="Deleting..."
                 onClick={() => handleDelete(restriction.domain)}
               >
                 Delete
-              </Button>
+              </LoadingButton>
             </TableCell>
           </TableRow>
         ))}
