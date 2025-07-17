@@ -7,7 +7,7 @@ export default function Home() {
     <main className="min-h-screen flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col gap-20 items-center">
         <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
+          <div className="w-full flex justify-between items-center p-3 px-5 text-sm">
             <div className="flex gap-5 items-center font-semibold">
               <Link href={"/"}>Nexus</Link>
             </div>
@@ -44,18 +44,14 @@ export default function Home() {
               </p>
             </div>
             <div className="flex flex-col items-center p-6 border rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">
-                User Management
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">User Management</h3>
               <p className="text-muted-foreground text-center">
                 Easily manage users and their permissions within your
                 organization.
               </p>
             </div>
             <div className="flex flex-col items-center p-6 border rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">
-                And much more...
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">And much more...</h3>
               <p className="text-muted-foreground text-center">
                 Explore all the features designed to boost your productivity.
               </p>

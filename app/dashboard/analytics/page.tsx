@@ -6,7 +6,6 @@ import {
   getTopDomains,
   getWeeklyComparison,
   getDomainVisits,
-  getAllUsers,
 } from "@/lib/api";
 import { Overview } from "@/components/overview";
 import { DomainBarChart } from "@/components/domain-bar-chart";
@@ -19,7 +18,6 @@ import {
   SummaryData,
   WeeklyComparisonData,
   DomainVisitData,
-  UserListData,
 } from "@/lib/types";
 import { UserSelector } from "@/components/user-selector";
 import {
@@ -41,7 +39,21 @@ interface PageProps {
 export default async function AnalyticsPage({ searchParams }: PageProps) {
   const awaitedSearchParams = await searchParams;
   const uidParam = awaitedSearchParams?.uid;
-  const uid = Array.isArray(uidParam) ? uidParam[0] : uidParam ?? "user123";
+  const uid = Array.isArray(uidParam) ? uidParam[0] : uidParam;
+
+  // Don't fetch data if no user is selected
+  if (!uid) {
+    return (
+      <div className="w-full flex flex-col gap-8">
+        <UserSelector />
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">
+            Please select a user to view analytics
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   let summary: SummaryData | undefined;
   let topDomains: DomainData[] | undefined;
@@ -49,7 +61,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   let weeklyComparison: WeeklyComparisonData | undefined;
   let monthlyComparison: MonthlyComparisonData | undefined;
   let domainVisits: DomainVisitData[] | undefined;
-  let userList: UserListData | undefined;
 
   try {
     [
@@ -59,7 +70,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       weeklyComparison,
       monthlyComparison,
       domainVisits,
-      userList,
     ] = await Promise.all([
       getSummary(uid),
       getTopDomains(uid),
@@ -67,15 +77,14 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       getWeeklyComparison(uid),
       getMonthlyComparison(uid),
       getDomainVisits(uid),
-      getAllUsers(),
     ]);
   } catch (e) {
     console.error("Failed to fetch dashboard data:", e);
   }
 
   return (
-    <div className="w-full flex flex-col gap-8">
-      <UserSelector users={userList?.users ?? []} />
+    <div className="w-full flex flex-col gap-8 max-w-7xl mx-auto">
+      <UserSelector />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
