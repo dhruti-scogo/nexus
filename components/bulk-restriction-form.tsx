@@ -66,6 +66,7 @@ export function BulkRestrictionForm() {
   const [podUsers, setPodUsers] = useState<Record<string, User[]>>({});
   const [selectedPod, setSelectedPod] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [podLoading, setPodLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -81,9 +82,25 @@ export function BulkRestrictionForm() {
 
   // Get filtered users based on selected pod
   const getFilteredUsers = () => {
-    if (selectedPod && selectedPod !== "all" && podUsers[selectedPod]) {
-      return podUsers[selectedPod].map((user) => user.uid);
+    console.log("🔍 Filtering users - selectedPod:", selectedPod);
+    console.log("🔍 Available pod users:", Object.keys(podUsers));
+    console.log("🔍 All users:", allUsers);
+
+    if (selectedPod && selectedPod !== "all") {
+      if (podUsers[selectedPod]) {
+        const podUserIds = podUsers[selectedPod].map((user) => user.uid);
+        console.log("🔍 Users for pod", selectedPod, ":", podUserIds);
+        return podUserIds;
+      } else {
+        console.log(
+          "🔍 No cached users for pod",
+          selectedPod,
+          "- returning empty array"
+        );
+        return [];
+      }
     }
+    console.log("🔍 Returning all users:", allUsers);
     return allUsers;
   };
 
@@ -161,29 +178,47 @@ export function BulkRestrictionForm() {
 
     const fetchPodUsers = async () => {
       if (selectedPod && selectedPod !== "all") {
+        console.log("🔄 Fetching users for pod:", selectedPod);
+        setPodLoading(true);
         try {
           const podUsersData = await getPodUsers(selectedPod);
+          console.log("📊 Pod users data received:", podUsersData);
+
+          // Handle different response structures
+          let users: User[] = [];
+          if (podUsersData?.users && Array.isArray(podUsersData.users)) {
+            users = podUsersData.users;
+          } else if (Array.isArray(podUsersData)) {
+            users = podUsersData;
+          }
+
+          const filteredUsers = users.filter(
+            (user) => user.uid && user.uid.trim() !== ""
+          );
+          console.log("✅ Filtered pod users:", filteredUsers);
+
           setPodUsers((prev) => ({
             ...prev,
-            [selectedPod]: (podUsersData?.users || []).filter(
-              (user) => user.uid && user.uid.trim() !== ""
-            ),
+            [selectedPod]: filteredUsers,
           }));
         } catch (error) {
-          console.error("Error fetching pod users:", error);
+          console.error("❌ Error fetching pod users:", error);
           // Set empty array on error
           setPodUsers((prev) => ({
             ...prev,
             [selectedPod]: [],
           }));
+        } finally {
+          setPodLoading(false);
         }
       }
     };
 
-    if (selectedPod && selectedPod !== "all" && !podUsers[selectedPod]) {
+    // Always fetch when pod changes, not just when not cached
+    if (selectedPod && selectedPod !== "all") {
       fetchPodUsers();
     }
-  }, [selectedPod, podUsers, mounted]);
+  }, [selectedPod, mounted]);
 
   // Common time presets in seconds
   const timePresets = [
@@ -273,10 +308,10 @@ export function BulkRestrictionForm() {
           <Users className="h-6 w-6 text-slate-600 dark:text-slate-400" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
             Bulk User Restrictions
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-base text-slate-600 dark:text-slate-400">
             Apply restrictions to multiple users at once
           </p>
         </div>
@@ -289,7 +324,7 @@ export function BulkRestrictionForm() {
             name="domain"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                <FormLabel className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-base font-semibold">
                   <Globe className="h-4 w-4" />
                   Domain
                 </FormLabel>
@@ -300,7 +335,7 @@ export function BulkRestrictionForm() {
                     className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus:border-slate-500 dark:focus:border-slate-400"
                   />
                 </FormControl>
-                <FormDescription className="flex items-center gap-2">
+                <FormDescription className="flex items-center gap-2 text-sm">
                   <Globe className="h-4 w-4" />
                   Enter a domain or full URL you want to restrict.
                 </FormDescription>
@@ -314,7 +349,7 @@ export function BulkRestrictionForm() {
             name="time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                <FormLabel className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-base font-semibold">
                   <Clock className="h-4 w-4" />
                   Time Limit
                 </FormLabel>
@@ -356,7 +391,7 @@ export function BulkRestrictionForm() {
                     </div>
                   </div>
                 </div>
-                <FormDescription className="flex items-center gap-2">
+                <FormDescription className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4" />
                   Choose a preset or enter custom time in seconds. This is the
                   maximum time allowed per day.
@@ -372,7 +407,7 @@ export function BulkRestrictionForm() {
             name="selectedUsers"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                <FormLabel className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-base font-semibold">
                   <Users className="h-4 w-4" />
                   Select Users ({selectedUsers.length} selected)
                 </FormLabel>
@@ -413,25 +448,24 @@ export function BulkRestrictionForm() {
 
                 {/* Pod Filter */}
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Filter className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Filter by Pod
-                    </label>
-                  </div>
+                  <label className="text-base font-semibold text-slate-700 dark:text-slate-300 mb-3 block">
+                    Filter by Pod
+                  </label>
                   <Select
                     onValueChange={setSelectedPod}
                     value={selectedPod || "all"}
                   >
                     <SelectTrigger className="w-64 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600">
-                      <SelectValue placeholder="Filter by pod (optional)" />
+                      <div className="flex items-center gap-2">
+                        <Filter className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                        <SelectValue placeholder="Filter by pod (optional)" />
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem
                         value="all"
                         className="flex items-center gap-2"
                       >
-                        <Filter className="h-4 w-4" />
                         All Pods
                       </SelectItem>
                       {pods.map((pod) => (
@@ -440,7 +474,6 @@ export function BulkRestrictionForm() {
                           value={pod}
                           className="flex items-center gap-2"
                         >
-                          <Building2 className="h-4 w-4" />
                           {pod}
                         </SelectItem>
                       ))}
@@ -451,30 +484,50 @@ export function BulkRestrictionForm() {
                 {/* User List */}
                 <ScrollArea className="h-64 border border-slate-200 dark:border-slate-600 rounded-md p-4 bg-white dark:bg-slate-800">
                   <div className="space-y-2">
-                    {filteredUsers.map((userId) => (
-                      <div
-                        key={userId}
-                        className="flex items-center space-x-2 hover:bg-slate-100 dark:hover:bg-slate-700 p-2 rounded transition-colors"
-                      >
-                        <Checkbox
-                          id={userId}
-                          checked={selectedUsers.includes(userId)}
-                          onCheckedChange={() => handleUserToggle(userId)}
-                          className="text-slate-600 dark:text-slate-400"
-                        />
-                        <label
-                          htmlFor={userId}
-                          className="text-sm cursor-pointer flex items-center gap-2"
-                        >
-                          <Users className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                          {userId}
-                        </label>
+                    {podLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          <span>Loading pod users...</span>
+                        </div>
                       </div>
-                    ))}
+                    ) : filteredUsers.length === 0 ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="text-center">
+                          <Users className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                          <p className="text-slate-600 dark:text-slate-400 text-sm">
+                            {selectedPod === "all" || !selectedPod
+                              ? "No users found"
+                              : `No users found in ${selectedPod} pod`}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      filteredUsers.map((userId) => (
+                        <div
+                          key={userId}
+                          className="flex items-center space-x-2 hover:bg-slate-100 dark:hover:bg-slate-700 p-2 rounded transition-colors"
+                        >
+                          <Checkbox
+                            id={userId}
+                            checked={selectedUsers.includes(userId)}
+                            onCheckedChange={() => handleUserToggle(userId)}
+                            className="text-slate-600 dark:text-slate-400"
+                          />
+                          <label
+                            htmlFor={userId}
+                            className="text-sm cursor-pointer flex items-center gap-2"
+                          >
+                            <Users className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                            {userId}
+                          </label>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </ScrollArea>
 
-                <FormDescription className="flex items-center gap-2">
+                <FormDescription className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
                   Select one or more users to apply the restriction to. You can
                   filter by pod to make selection easier.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -16,6 +16,13 @@ import { Button } from "./ui/button";
 import { DigitalClock } from "./digital-clock";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import {
   Users,
   Shield,
   Settings,
@@ -25,7 +32,10 @@ import {
   UserCheck,
   Building2,
   Users2,
+  Filter,
+  RefreshCw,
 } from "lucide-react";
+import { getAllPods, getPodUsers, getAllUsers } from "@/lib/api";
 
 export function RestrictionsManager({
   initialUid,
@@ -35,6 +45,96 @@ export function RestrictionsManager({
   allUsers: string[];
 }) {
   const [displayUid, setDisplayUid] = useState(initialUid);
+  const [selectedPod, setSelectedPod] = useState<string>("all");
+  const [pods, setPods] = useState<string[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<string[]>(allUsers || []);
+  const [isLoading, setIsLoading] = useState(false);
+
+  console.log("Component props - allUsers:", allUsers);
+  console.log("Current state - selectedPod:", selectedPod);
+  console.log("Current state - filteredUsers:", filteredUsers);
+
+  // Fetch pods on component mount
+  useEffect(() => {
+    const fetchPods = async () => {
+      try {
+        const podsData = await getAllPods();
+        console.log("Pods data received:", podsData);
+        setPods(podsData?.pods || []);
+      } catch (error) {
+        console.error("Failed to fetch pods:", error);
+        setPods([]);
+      }
+    };
+    fetchPods();
+  }, []);
+
+  // Update filtered users when allUsers prop changes
+  useEffect(() => {
+    if (selectedPod === "all") {
+      setFilteredUsers(allUsers || []);
+    }
+  }, [allUsers, selectedPod]);
+
+  // Handle pod selection and filter users
+  useEffect(() => {
+    console.log("Pod selection changed to:", selectedPod);
+
+    const filterUsersByPod = async () => {
+      if (selectedPod === "all") {
+        console.log("Setting all users:", allUsers);
+        setFilteredUsers(allUsers || []);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        console.log("Fetching users for pod:", selectedPod);
+        console.log(
+          "API URL will be:",
+          `https://backend.prasadpatra.dev/api/pods/${selectedPod}/users`
+        );
+
+        const podUsersData = await getPodUsers(selectedPod);
+        console.log("Pod users data received:", podUsersData);
+        console.log("Selected pod:", selectedPod);
+
+        // Handle different possible response structures
+        let userList: string[] = [];
+
+        try {
+          if (podUsersData?.users && Array.isArray(podUsersData.users)) {
+            // If response has users array with User objects
+            userList = podUsersData.users.map((user: any) => user.uid || user);
+          } else if (Array.isArray(podUsersData)) {
+            // If response is directly an array of User objects
+            userList = podUsersData.map((user: any) => user.uid || user);
+          } else if (podUsersData?.users && Array.isArray(podUsersData.users)) {
+            // If response has users array with string UIDs
+            userList = (podUsersData.users as any[]).filter(
+              (item: any) => typeof item === "string"
+            );
+          } else {
+            console.log("Unexpected response structure:", podUsersData);
+            userList = [];
+          }
+        } catch (error) {
+          console.error("Error processing pod users data:", error);
+          userList = [];
+        }
+
+        console.log("Final user list for pod:", userList);
+        setFilteredUsers(userList);
+      } catch (error) {
+        console.error("Failed to fetch pod users:", error);
+        setFilteredUsers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    filterUsersByPod();
+  }, [selectedPod, allUsers]);
 
   return (
     <div className="space-y-6 w-full mx-auto">
@@ -60,51 +160,90 @@ export function RestrictionsManager({
       <div className="grid gap-8 md:grid-cols-1 xl:grid-cols-6 w-full">
         <Card className="col-span-2 border-l-4 border-l-slate-600 dark:border-l-slate-500 shadow-2xl bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 p-6">
-            <CardTitle className="flex items-center gap-3 text-slate-800 dark:text-slate-200 text-xl font-semibold">
-              <div className="p-2 bg-gradient-to-br from-slate-700 to-slate-800 dark:from-slate-600 dark:to-slate-700 rounded-lg shadow-md">
-                <Users className="h-5 w-5 text-slate-100" />
+            <div className="flex items-center justify-between mb-4">
+              <CardTitle className="flex items-center gap-3 text-slate-800 dark:text-slate-200 text-xl font-semibold">
+                <div className="p-2 bg-gradient-to-br from-slate-700 to-slate-800 dark:from-slate-600 dark:to-slate-700 rounded-lg shadow-md">
+                  <Users className="h-5 w-5 text-slate-100" />
+                </div>
+                Users
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Select value={selectedPod} onValueChange={setSelectedPod}>
+                  <SelectTrigger className="w-48 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600">
+                    <SelectValue placeholder="Select Pod" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Pods</SelectItem>
+                    {(pods || []).map((pod) => (
+                      <SelectItem key={pod} value={pod}>
+                        {pod}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              Users
-            </CardTitle>
-            <CardDescription className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mt-2 font-medium">
+            </div>
+            <CardDescription className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-medium">
               <UserCheck className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-              Select a user to view their restrictions
+              {selectedPod === "all"
+                ? "Select a user to view their restrictions"
+                : `Users in ${selectedPod} pod`}
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-6">
-            <ScrollArea className="h-96 pr-4">
+          <CardContent className="p-4">
+            <ScrollArea className="h-[950px] pr-4">
               <div className="space-y-3">
-                {(allUsers ?? []).map((user) => (
-                  <Button
-                    key={user}
-                    variant={displayUid === user ? "default" : "ghost"}
-                    className={`w-full justify-start transition-all duration-300 rounded-xl p-4 h-auto ${
-                      displayUid === user
-                        ? "bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-slate-100 shadow-lg transform scale-[1.02]"
-                        : "hover:bg-gradient-to-r hover:from-slate-100 hover:to-slate-200 dark:hover:from-slate-800 dark:hover:to-slate-700 hover:text-slate-800 dark:hover:text-slate-200 hover:shadow-md"
-                    }`}
-                    onClick={() => setDisplayUid(user)}
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <div
-                        className={`p-2 rounded-lg ${
-                          displayUid === user
-                            ? "bg-slate-100/20"
-                            : "bg-slate-100 dark:bg-slate-800"
-                        }`}
-                      >
-                        <UserCheck
-                          className={`h-4 w-4 ${
-                            displayUid === user
-                              ? "text-slate-100"
-                              : "text-slate-600 dark:text-slate-400"
-                          }`}
-                        />
-                      </div>
-                      <span className="font-medium">{user}</span>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>Loading users...</span>
                     </div>
-                  </Button>
-                ))}
+                  </div>
+                ) : filteredUsers.length === 0 ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                      <UserCheck className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                      <p className="text-slate-600 dark:text-slate-400 text-sm">
+                        {selectedPod === "all"
+                          ? "No users found"
+                          : `No users found in ${selectedPod} pod`}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <Button
+                      key={user}
+                      variant={displayUid === user ? "default" : "ghost"}
+                      className={`w-full justify-start transition-all duration-300 rounded-xl p-4 h-auto ${
+                        displayUid === user
+                          ? "bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-slate-100 shadow-lg transform scale-[1.02]"
+                          : "hover:bg-gradient-to-r hover:from-slate-100 hover:to-slate-200 dark:hover:from-slate-800 dark:hover:to-slate-700 hover:text-slate-800 dark:hover:text-slate-200 hover:shadow-md"
+                      }`}
+                      onClick={() => setDisplayUid(user)}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div
+                          className={`p-2 rounded-lg ${
+                            displayUid === user
+                              ? "bg-slate-100/20"
+                              : "bg-slate-100 dark:bg-slate-800"
+                          }`}
+                        >
+                          <UserCheck
+                            className={`h-4 w-4 ${
+                              displayUid === user
+                                ? "text-slate-100"
+                                : "text-slate-600 dark:text-slate-400"
+                            }`}
+                          />
+                        </div>
+                        <span className="font-medium">{user}</span>
+                      </div>
+                    </Button>
+                  ))
+                )}
               </div>
             </ScrollArea>
           </CardContent>
