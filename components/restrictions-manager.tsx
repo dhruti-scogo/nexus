@@ -13,6 +13,7 @@ import { BulkRestrictionForm } from "./bulk-restriction-form";
 import { RestrictionsTable } from "./restrictions-table";
 import { ScrollArea } from "./ui/scroll-area";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import { DigitalClock } from "./digital-clock";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import {
@@ -34,6 +35,7 @@ import {
   Users2,
   Filter,
   RefreshCw,
+  Search,
 } from "lucide-react";
 import { getAllPods, getPodUsers, getAllUsers } from "@/lib/api";
 
@@ -49,6 +51,7 @@ export function RestrictionsManager({
   const [pods, setPods] = useState<string[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<string[]>(allUsers || []);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   console.log("Component props - allUsers:", allUsers);
   console.log("Current state - selectedPod:", selectedPod);
@@ -136,6 +139,17 @@ export function RestrictionsManager({
     filterUsersByPod();
   }, [selectedPod, allUsers]);
 
+  // Filter users based on search query
+  const getDisplayUsers = () => {
+    if (!searchQuery.trim()) {
+      return filteredUsers;
+    }
+
+    return filteredUsers.filter((user) =>
+      user.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
   return (
     <div className="space-y-6 w-full mx-auto">
       {/* Header with Clock */}
@@ -183,6 +197,20 @@ export function RestrictionsManager({
                 </Select>
               </div>
             </div>
+
+            {/* Search Bar */}
+            <div className="relative mb-4">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+              </div>
+              <Input
+                type="text"
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:border-slate-500 dark:focus:border-slate-400"
+              />
+            </div>
             <CardDescription className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-medium">
               <UserCheck className="h-4 w-4 text-slate-500 dark:text-slate-400" />
               {selectedPod === "all"
@@ -200,19 +228,21 @@ export function RestrictionsManager({
                       <span>Loading users...</span>
                     </div>
                   </div>
-                ) : filteredUsers.length === 0 ? (
+                ) : getDisplayUsers().length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="text-center">
                       <UserCheck className="h-8 w-8 text-slate-400 mx-auto mb-2" />
                       <p className="text-slate-600 dark:text-slate-400 text-sm">
-                        {selectedPod === "all"
+                        {searchQuery.trim()
+                          ? `No users found matching "${searchQuery}"`
+                          : selectedPod === "all"
                           ? "No users found"
                           : `No users found in ${selectedPod} pod`}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  filteredUsers.map((user) => (
+                  getDisplayUsers().map((user) => (
                     <Button
                       key={user}
                       variant={displayUid === user ? "default" : "ghost"}
