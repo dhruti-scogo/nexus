@@ -171,7 +171,7 @@ export function RestrictionsManager({
         <DigitalClock />
       </div>
 
-      <div className="grid gap-8 md:grid-cols-1 xl:grid-cols-6 w-full">
+      <div className="grid gap-8 md:grid-cols-1 xl:grid-cols-6 w-full max-w-full mx-auto">
         <Card className="col-span-2 border-l-4 border-l-slate-600 dark:border-l-slate-500 shadow-2xl bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -197,19 +197,24 @@ export function RestrictionsManager({
                 </Select>
               </div>
             </div>
-
-            {/* Search Bar */}
-            <div className="relative mb-4">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+            {/* Search Bar and User Count */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="relative flex-1 mr-4">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                </div>
+                <Input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:border-slate-500 dark:focus:border-slate-400 w-full"
+                />
               </div>
-              <Input
-                type="text"
-                placeholder="Search users..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:border-slate-500 dark:focus:border-slate-400"
-              />
+              <span className="text-base text-slate-700 dark:text-slate-100 bg-slate-300 dark:bg-slate-800 rounded-full px-5 py-2 shadow-md ml-2 whitespace-nowrap transition-all duration-200">
+                {getDisplayUsers().length} user
+                {getDisplayUsers().length !== 1 ? "s" : ""}
+              </span>
             </div>
             <CardDescription className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-medium">
               <UserCheck className="h-4 w-4 text-slate-500 dark:text-slate-400" />
