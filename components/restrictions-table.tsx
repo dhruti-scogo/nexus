@@ -108,7 +108,11 @@ export function RestrictionsTable({ uid }: { uid: string }) {
         <TableBody>
           {(restrictions ?? []).map((restriction) => (
             <TableRow
-              key={restriction.id}
+              key={
+                restriction.id !== undefined && restriction.id !== null
+                  ? `${restriction.id}-${restriction.domain}`
+                  : `${restriction.domain}-${restriction.time}`
+              }
               className="hover:bg-gradient-to-r hover:from-slate-100 hover:to-slate-200 dark:hover:from-slate-800 dark:hover:to-slate-700 transition-all duration-200"
             >
               <TableCell className="font-semibold text-slate-800 dark:text-slate-200">

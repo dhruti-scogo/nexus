@@ -55,7 +55,13 @@ async function fetcher<T>(url: string, options?: RequestInit): Promise<T> {
 
     throw error;
   }
-  return res.json();
+  // PATCH: Handle empty response bodies gracefully
+  try {
+    return await res.json();
+  } catch (e) {
+    // If response is empty, return null (or you could return {} if preferred)
+    return null as any;
+  }
 }
 
 // Analytics endpoints (these may not exist in the current backend)
