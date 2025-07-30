@@ -1,0 +1,118 @@
+name: Deploy Safe Internet PROD
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch: 
+
+env:
+  REGISTRY: scogo.azurecr.io
+  SERVICE: safe-internet
+  DEPLOYMENT_ENV: production
+  NODE_ENV: production
+
+jobs:
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      match: ${{ steps.regex-match.outputs.match }}
+      group1: ${{ steps.regex-match.outputs.group1 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Regex matching
+        uses: kaisugi/action-regex-match@v1.0.0
+        id: regex-match
+        with:
+          text: ${{ github.ref_name }}
+          regex: '(v\d+.\d+.\d+)$'
+          flags: gm
+
+      - name: Exit if tag not matched
+        if: ${{ steps.regex-match.outputs.match == '' }}
+        run: |
+          echo "Tag was not matched"
+          exit 1
+
+      - name: Log into the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.AZURE_CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.AZURE_CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Extract metadata for the Docker image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.SERVICE }}
+          tags: |
+            type=raw,value=${{ steps.regex-match.outputs.group1 }},enable=true
+            type=raw,value=latest,enable=true
+
+      - name: Build and push the Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANONYMOUS_KEY }}
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
+  infra-release:
+    name: Create Infra Release(GitOps)
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Infra Repo
+        uses: actions/checkout@v4
+        with:
+          repository: scogonw/infra
+          token: ${{ secrets.GITOPS_PAT }}
+
+      - name: Setup helm
+        uses: azure/setup-helm@v3
+
+      - name: Update Image Tag & App Version
+        uses: mikefarah/yq@master
+        with:
+          cmd: |
+            yq -i '.image.tag="${{ needs.build.outputs.group1 }}"' helm/values/safe-internet/values-${{ env.DEPLOYMENT_ENV }}.yaml
+
+      - name: Generate manifest file
+        run: |
+          mkdir -p application-manifests/${{ env.DEPLOYMENT_ENV }}/safe-internet
+          helm template safe-internet helm/charts/safe-internet --namespace=safe-internet --values=helm/values/safe-internet/values-${{ env.DEPLOYMENT_ENV }}.yaml > application-manifests/${{ env.DEPLOYMENT_ENV }}/safe-internet/manifests.yaml
+
+      - name: Commit the changes made
+        run: | 
+          git config --global user.name github-actions
+          git config --global user.email github-actions@github.com
+          git add .
+          git commit -am "[RELEASE] Update ${{ env.SERVICE }} image tag"
+          git push
