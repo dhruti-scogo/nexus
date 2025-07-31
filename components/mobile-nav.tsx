@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { Home, BarChart3, Menu, X } from "lucide-react";
 import { ThemeSwitcher } from "./theme-switcher";
-import { AnalyticsDropdown } from "./analytics-dropdown";
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,10 +36,14 @@ export function MobileNav() {
                 Dashboard
               </Link>
 
-              <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 font-medium">
+              <Link
+                href="/dashboard/analytics"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 font-medium"
+              >
                 <BarChart3 className="h-5 w-5" />
-                <AnalyticsDropdown />
-              </div>
+                Analytics
+              </Link>
 
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
                 <div className="flex items-center justify-between px-4 py-3">

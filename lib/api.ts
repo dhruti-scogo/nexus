@@ -1,15 +1,7 @@
 import {
-  DailySummaryData,
-  DomainData,
-  DomainVisitData,
-  GlobalAverageUsageData,
-  GlobalTimeSpentData,
-  MonthlyComparisonData,
   RestrictionCreateRequest,
   RestrictionData,
-  SummaryData,
   UserListData,
-  WeeklyComparisonData,
   PodListData,
   PodUsersData,
   User,
@@ -64,31 +56,7 @@ async function fetcher<T>(url: string, options?: RequestInit): Promise<T> {
   }
 }
 
-// Analytics endpoints (these may not exist in the current backend)
-export const getTopDomains = (uid: string) =>
-  fetcher<DomainData[]>(`${API_BASE_URL}/analytics/top-domains/${uid}`);
-export const getDailySummary = (uid: string) =>
-  fetcher<DailySummaryData[]>(`${API_BASE_URL}/analytics/daily-summary/${uid}`);
-export const getDomainVisits = (uid: string) =>
-  fetcher<DomainVisitData[]>(`${API_BASE_URL}/analytics/domain-visits/${uid}`);
-export const getSummary = (uid: string) =>
-  fetcher<SummaryData>(`${API_BASE_URL}/analytics/summary/${uid}`);
-export const getWeeklyComparison = (uid: string) =>
-  fetcher<WeeklyComparisonData>(
-    `${API_BASE_URL}/analytics/compare-week/${uid}`
-  );
-export const getMonthlyComparison = (uid: string) =>
-  fetcher<MonthlyComparisonData>(
-    `${API_BASE_URL}/analytics/compare-month/${uid}`
-  );
-export const getGlobalMostTimeSpent = () =>
-  fetcher<GlobalTimeSpentData[]>(
-    `${API_BASE_URL}/analytics/global/most-time-spent`
-  );
-export const getGlobalAverageDailyUsage = () =>
-  fetcher<GlobalAverageUsageData>(
-    `${API_BASE_URL}/analytics/global/average-daily-usage`
-  );
+// Analytics endpoints removed - redirecting to Grafana dashboard
 
 // User Management endpoints
 export const getAllUsers = () => {

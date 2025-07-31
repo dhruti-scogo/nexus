@@ -3,7 +3,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
 import { AuthButton } from "@/components/auth-button";
-import { AnalyticsDropdown } from "@/components/analytics-dropdown";
+
 import { Shield, BarChart3, Settings, Home, Sparkles } from "lucide-react";
 import { MobileNav } from "@/components/mobile-nav";
 
@@ -46,10 +46,13 @@ export default function ProtectedLayout({
                 Dashboard
               </Link>
 
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 font-medium group">
+              <Link
+                href="/dashboard/analytics"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 font-medium group"
+              >
                 <BarChart3 className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                <AnalyticsDropdown />
-              </div>
+                Analytics
+              </Link>
             </div>
 
             {/* Right Side Actions */}
