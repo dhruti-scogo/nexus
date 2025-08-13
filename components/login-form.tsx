@@ -18,7 +18,7 @@ import { toast } from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle } from "lucide-react";
 import { useState } from "react";
 
 const formSchema = z.object({
@@ -29,6 +29,7 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,6 +40,9 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Clear any previous errors
+    setLoginError("");
+
     if (values.email === "admin" && values.password === "123456") {
       router.push("/auth/sign-up?allowed=true");
       return;
@@ -48,7 +52,11 @@ export function LoginForm() {
     const { error } = await supabase.auth.signInWithPassword(values);
 
     if (error) {
-      toast.error(error.message);
+      // Set a user-friendly error message
+      setLoginError(
+        "Invalid credentials. Please check your email and password."
+      );
+      toast.error("Login failed");
     } else {
       toast.success("Logged in successfully!");
 
@@ -65,6 +73,13 @@ export function LoginForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {loginError && (
+          <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span className="text-sm font-medium">{loginError}</span>
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="email"
@@ -80,6 +95,11 @@ export function LoginForm() {
                     placeholder="Enter your email address"
                     {...field}
                     className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus:border-slate-500 dark:focus:border-slate-400 h-12 text-base"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      // Clear error when user starts typing
+                      if (loginError) setLoginError("");
+                    }}
                   />
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 dark:text-slate-400" />
                 </div>
@@ -116,6 +136,11 @@ export function LoginForm() {
                     placeholder="Enter your password"
                     {...field}
                     className="pl-10 pr-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus:border-slate-500 dark:focus:border-slate-400 h-12 text-base"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      // Clear error when user starts typing
+                      if (loginError) setLoginError("");
+                    }}
                   />
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 dark:text-slate-400" />
                   <button
