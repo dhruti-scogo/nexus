@@ -9,7 +9,7 @@ import {
   RestrictionPodRequest,
 } from "./types";
 
-const API_BASE_URL = "https://backend.prasadpatra.dev/api";
+const API_BASE_URL = "https://dev.prasadpatra.dev/api";
 
 // Define error response types
 interface ValidationError {
