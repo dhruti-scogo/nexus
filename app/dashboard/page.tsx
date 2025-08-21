@@ -14,8 +14,10 @@ export default async function ProtectedPage() {
       userList?.users?.length || 0,
       "users"
     );
-    // Use the first user as default if available
-    defaultUid = userList?.users?.[0] || "";
+    // Use the first user as default if available - handle both string UIDs and User objects
+    const firstUser = userList?.users?.[0];
+    defaultUid =
+      typeof firstUser === "string" ? firstUser : firstUser?.uid || "";
     console.log("🎯 Dashboard Page: Default UID set to:", defaultUid);
   } catch (e) {
     console.error("❌ Dashboard Page: Failed to fetch user list:", e);

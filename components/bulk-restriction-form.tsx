@@ -62,7 +62,7 @@ const formSchema = z.object({
 export function BulkRestrictionForm() {
   const { mutate } = useSWRConfig();
   const [pods, setPods] = useState<string[]>([]);
-  const [allUsers, setAllUsers] = useState<string[]>([]);
+  const [allUsers, setAllUsers] = useState<(string | User)[]>([]); // Fix type to match API response
   const [podUsers, setPodUsers] = useState<Record<string, User[]>>({});
   const [selectedPod, setSelectedPod] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -81,7 +81,8 @@ export function BulkRestrictionForm() {
   const selectedUsers = form.watch("selectedUsers");
 
   // Get filtered users based on selected pod
-  const getFilteredUsers = () => {
+  const getFilteredUsers = (): string[] => {
+    // Ensure return type is string[]
     console.log("🔍 Filtering users - selectedPod:", selectedPod);
     console.log("🔍 Available pod users:", Object.keys(podUsers));
     console.log("🔍 All users:", allUsers);
@@ -101,7 +102,8 @@ export function BulkRestrictionForm() {
       }
     }
     console.log("🔍 Returning all users:", allUsers);
-    return allUsers;
+    // Convert User objects to UIDs for consistency
+    return allUsers.map((user) => (typeof user === "string" ? user : user.uid));
   };
 
   const filteredUsers = getFilteredUsers();
@@ -125,8 +127,17 @@ export function BulkRestrictionForm() {
 
       // Filter out empty string values with null checks
       setPods((podsData?.pods || []).filter((pod) => pod && pod.trim() !== ""));
+
+      // Handle both string UIDs and User objects
       setAllUsers(
-        (usersData?.users || []).filter((uid) => uid && uid.trim() !== "")
+        (usersData?.users || []).filter((item) => {
+          if (typeof item === "string") {
+            return item && item.trim() !== "";
+          } else if (item && typeof item === "object" && item.uid) {
+            return item.uid && item.uid.trim() !== "";
+          }
+          return false;
+        })
       );
 
       console.log("✅ Data fetched successfully");
@@ -136,7 +147,14 @@ export function BulkRestrictionForm() {
       );
       console.log(
         "👤 Filtered users:",
-        (usersData?.users || []).filter((uid) => uid && uid.trim() !== "")
+        (usersData?.users || []).filter((item) => {
+          if (typeof item === "string") {
+            return item && item.trim() !== "";
+          } else if (item && typeof item === "object" && item.uid) {
+            return item.uid && item.uid.trim() !== "";
+          }
+          return false;
+        })
       );
     } catch (error) {
       console.error("❌ Error fetching data:", error);
@@ -241,6 +259,7 @@ export function BulkRestrictionForm() {
   };
 
   const handleSelectAllUsers = () => {
+    // Since getFilteredUsers() now returns string[], we can use filteredUsers directly
     form.setValue("selectedUsers", filteredUsers);
   };
 

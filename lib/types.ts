@@ -8,7 +8,7 @@ export interface RestrictionData {
 }
 
 export interface UserListData {
-  users: string[];
+  users: (string | User)[]; // Support both string UIDs and User objects
   count: number;
 }
 
@@ -31,6 +31,7 @@ export interface PodUsersData {
 export interface User {
   id: number;
   uid: string;
+  username?: string; // Add optional username field since API includes it
   hostname: string;
   podName: string;
   extensionVersion: string;

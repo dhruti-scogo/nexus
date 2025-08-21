@@ -38,18 +38,21 @@ import {
   Search,
 } from "lucide-react";
 import { getAllPods, getPodUsers, getAllUsers } from "@/lib/api";
+import { User } from "@/lib/types";
 
 export function RestrictionsManager({
   initialUid,
   allUsers,
 }: {
   initialUid: string;
-  allUsers: string[];
+  allUsers: (string | User)[];
 }) {
-  const [displayUid, setDisplayUid] = useState(initialUid);
+  const [displayUid, setDisplayUid] = useState<string>(initialUid);
   const [selectedPod, setSelectedPod] = useState<string>("all");
   const [pods, setPods] = useState<string[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<string[]>(allUsers || []);
+  const [filteredUsers, setFilteredUsers] = useState<(string | User)[]>(
+    allUsers || []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -75,7 +78,11 @@ export function RestrictionsManager({
   // Update filtered users when allUsers prop changes
   useEffect(() => {
     if (selectedPod === "all") {
-      setFilteredUsers(allUsers || []);
+      // Convert User objects to UIDs if needed for consistency
+      const processedUsers = (allUsers || []).map((user) =>
+        typeof user === "string" ? user : user
+      );
+      setFilteredUsers(processedUsers);
     }
   }, [allUsers, selectedPod]);
 
@@ -86,7 +93,10 @@ export function RestrictionsManager({
     const filterUsersByPod = async () => {
       if (selectedPod === "all") {
         console.log("Setting all users:", allUsers);
-        setFilteredUsers(allUsers || []);
+        const processedUsers = (allUsers || []).map((user) =>
+          typeof user === "string" ? user : user
+        );
+        setFilteredUsers(processedUsers);
         return;
       }
 
@@ -103,20 +113,15 @@ export function RestrictionsManager({
         console.log("Selected pod:", selectedPod);
 
         // Handle different possible response structures
-        let userList: string[] = [];
+        let userList: any[] = [];
 
         try {
           if (podUsersData?.users && Array.isArray(podUsersData.users)) {
-            // If response has users array with User objects
-            userList = podUsersData.users.map((user: any) => user.uid || user);
+            // If response has users array with User objects, keep the full objects
+            userList = podUsersData.users;
           } else if (Array.isArray(podUsersData)) {
             // If response is directly an array of User objects
-            userList = podUsersData.map((user: any) => user.uid || user);
-          } else if (podUsersData?.users && Array.isArray(podUsersData.users)) {
-            // If response has users array with string UIDs
-            userList = (podUsersData.users as any[]).filter(
-              (item: any) => typeof item === "string"
-            );
+            userList = podUsersData;
           } else {
             console.log("Unexpected response structure:", podUsersData);
             userList = [];
@@ -145,9 +150,22 @@ export function RestrictionsManager({
       return filteredUsers;
     }
 
-    return filteredUsers.filter((user) =>
-      user.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return filteredUsers.filter((user) => {
+      const searchTerm = searchQuery.toLowerCase();
+      // Handle both string UIDs and User objects
+      if (typeof user === "string") {
+        return user.toLowerCase().includes(searchTerm);
+      } else if (user && typeof user === "object") {
+        // Search in uid, username, hostname, podName
+        return (
+          (user.uid && user.uid.toLowerCase().includes(searchTerm)) ||
+          (user.username && user.username.toLowerCase().includes(searchTerm)) ||
+          (user.hostname && user.hostname.toLowerCase().includes(searchTerm)) ||
+          (user.podName && user.podName.toLowerCase().includes(searchTerm))
+        );
+      }
+      return false;
+    });
   };
 
   return (
@@ -247,37 +265,68 @@ export function RestrictionsManager({
                     </div>
                   </div>
                 ) : (
-                  getDisplayUsers().map((user) => (
-                    <Button
-                      key={user}
-                      variant={displayUid === user ? "default" : "ghost"}
-                      className={`w-full justify-start transition-all duration-300 rounded-xl p-4 h-auto ${
-                        displayUid === user
-                          ? "bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-slate-100 shadow-lg transform scale-[1.02]"
-                          : "hover:bg-gradient-to-r hover:from-slate-100 hover:to-slate-200 dark:hover:from-slate-800 dark:hover:to-slate-700 hover:text-slate-800 dark:hover:text-slate-200 hover:shadow-md"
-                      }`}
-                      onClick={() => setDisplayUid(user)}
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <div
-                          className={`p-2 rounded-lg ${
-                            displayUid === user
-                              ? "bg-slate-100/20"
-                              : "bg-slate-100 dark:bg-slate-800"
-                          }`}
-                        >
-                          <UserCheck
-                            className={`h-4 w-4 ${
-                              displayUid === user
-                                ? "text-slate-100"
-                                : "text-slate-600 dark:text-slate-400"
+                  getDisplayUsers().map((user) => {
+                    // Handle both string UIDs and User objects
+                    const userKey = typeof user === "string" ? user : user.uid;
+                    const displayName =
+                      typeof user === "string"
+                        ? user
+                        : user.username ||
+                          user.hostname ||
+                          user.uid ||
+                          "Unknown User";
+
+                    return (
+                      <Button
+                        key={userKey}
+                        variant={displayUid === userKey ? "default" : "ghost"}
+                        className={`w-full justify-start transition-all duration-300 rounded-xl p-4 h-auto ${
+                          displayUid === userKey
+                            ? "bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-slate-100 shadow-lg transform scale-[1.02]"
+                            : "hover:bg-gradient-to-r hover:from-slate-100 hover:to-slate-200 dark:hover:from-slate-800 dark:hover:to-slate-700 hover:text-slate-800 dark:hover:text-slate-200 hover:shadow-md"
+                        }`}
+                        onClick={() => setDisplayUid(userKey)}
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div
+                            className={`p-2 rounded-lg ${
+                              displayUid === userKey
+                                ? "bg-slate-100/20"
+                                : "bg-slate-100 dark:bg-slate-800"
                             }`}
-                          />
+                          >
+                            <UserCheck
+                              className={`h-4 w-4 ${
+                                displayUid === userKey
+                                  ? "text-slate-100"
+                                  : "text-slate-600 dark:text-slate-400"
+                              }`}
+                            />
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">
+                              {String(displayName)}
+                            </span>
+                            {typeof user === "object" && (
+                              <div className="flex flex-col gap-1">
+                                {user.podName && (
+                                  <span className="text-xs opacity-70">
+                                    Pod: {String(user.podName)}
+                                  </span>
+                                )}
+                                {user.username &&
+                                  user.username !== displayName && (
+                                    <span className="text-xs opacity-70">
+                                      @{String(user.username)}
+                                    </span>
+                                  )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <span className="font-medium">{user}</span>
-                      </div>
-                    </Button>
-                  ))
+                      </Button>
+                    );
+                  })
                 )}
               </div>
             </ScrollArea>
